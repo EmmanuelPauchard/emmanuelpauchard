@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>postgresql: tutorial notes | Emmanuel Pauchard</title>
+<meta name="generator" content="Jekyll v3.9.2" />
+<meta property="og:title" content="postgresql: tutorial notes" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="PostgreSQL tests The following are my learning notes while doing the postgresql tutorial. References Tutorial Reference documentation Test environment Download postgresql for windows Installation Tutorial Note: remember the user/password… VS Code Extension: ckolkman.vscode-postgres Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options Test: Open the extension toolbar and select “Add Connection” with the server data Create a new file and set language type to “postgres” Enter a query Enter command: PostgreSQL: Run Query (F5) Tutorial Notes Select order of evaluation: FROM -&gt; WHERE -&gt; GROUP BY -&gt; HAVING -&gt; SELECT -&gt; DISTINCT -&gt; ORDER BY -&gt; LIMIT Concatenation: SELECT first_name || &#39; &#39; || last_name Aliases: AS If spaces -&gt; use double quotes operators LENGTH(first_name) COUNT SUM AVG ROUND(number, precision) ORDER BY NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless: ORDER BY num NULLS LAST; DISTINCT remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one The following will remove duplicates on the set (first_name, last_name): SELECT DISTINCT first_name, last_name FROM double_customer; DISTINCT ON A postgresql extension to SQL. Allow to specify the column to filter while also selecing others. The following will remove duplicates on first_name but select both columns: SELECT DISTINCT ON (first_name) first_name, last_name FROM double_customer; LIKE ‘’ Return true if field matches the pattern. 2 wildcards: ‘%’ matches any character, “_” matches exactly one Case sensitive SQL extension: ILIKE: case insensitive variant of LIKE; Aliases: ~~ LIKE ~~* ILIKE !~~ NOT LIKE !~~* NOT ILIKE BETWEEN Possible usages: LENGTH(first_name) IN (3, 4, 5) LENGTH(first_name) BETWEEN 3 AND 5 in which case the matching range includes 3 and 5 LIMIT Like “head”, limit the number of returned values is non-sql standard but widespread. SQL standard is: OFFSET start { ROW | ROWS } FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY WHERE Filter values from expression. It is possible to use another select statement, as in: SELECT customer_id FROM customer WHERE customer_id NOT IN (SELECT customer_id from rental); When filtering on dates, even if column field is timestamp, one can directly use: WHERE payment_date BETWEEN &#39;2007-02-07&#39; AND &#39;2007-02-15&#39;; JOINS Element of the FROM clause: [ INNER ] JOIN {LEFT RIGHT FULL} [OUTER] JOIN must be followed by ON or USING or NATURAL INNER JOIN == intersection of sets Example: find all transactions for a given client OUTER JOIN: LEFT = the source indicated just after the FROM clause includes the intersecting set plus the whole LEFT RIGHT FULL set, using ‘NULL’ values in columns for rows that are not intersecting returned in the order from the LEFT table, except for RIGHT JOIN Examples: LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN) SELECT * FROM basket_a , basket_b;returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: SELECT * FROM basket_a CROSS JOIN basket_b NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly. USING: USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both. GROUP BY / HAVING GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions. When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY Other elements can be selected through aggregate functions: SUM, COUNT, … HAVING introduces a filter to the group The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows. ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports) SELECT store_id, COUNT (customer_id) FROM customer GROUP BY store_id HAVING COUNT (customer_id) &gt; 300; Note we can’t use WHERE to perform an equivalent filter here. UNION / INTERSECT / EXCEPT [ALL | DISTINCT] Combine the output of more than one SELECT statement UNION: returns all rows that are in one or both of the result sets INTERSECT: returns all rows that are strictly in both result sets EXCEPT: returns the rows that are in the first result set but not in the second In all three cases, duplicate rows are eliminated unless ALL is specified. The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows. SUBQUERY Syntax: use parenthesis around the subquery The subquery may return one row (value) or a list of rows The outer query can use: IN operator (for instance in the where clause) EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns) If the subquery returns NULL, EXISTS returns true ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column) ANY returns true if operation is true for at least one element of the suquery ALL returns true if operation is true for all elements of the suquery PostgreSQL executes the query that contains a subquery in the following sequence: First, executes the subquery. Second, gets the result and passes it to the outer query. Third, executes the outer query. CTE / RECURSIVE Usefull to parse hierarchical data: subordinates of Manager X, BOM… INSERT INSERT INTO links (url, name) VALUES (&#39;http://www.postgresql.org&#39;,&#39;PostgreSQL&#39;), (&#39;https://www.yahoo.com&#39;,&#39;Yahoo&#39;), RETURNING id; RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id if no value is specified for a column, use default Merge Resolution: Upsert (update - insert) Inserting a new row with values already in the table is only a problem if the table defines constraints on some columns. For instance: CREATE TABLE customers ( customer_id serial PRIMARY KEY, name VARCHAR UNIQUE, email VARCHAR NOT NULL, active bool NOT NULL DEFAULT TRUE ); The UNIQUE constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised. To specify the behavior to handle this situation without error, use ON CONFLICT clause (postgresql extension). ON CONFLICT [ conflict_target ] conflict_action where conflict_target can be one of: ( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ] ON CONSTRAINT constraint_name and conflict_action is one of: DO NOTHING DO UPDATE SET { column_name = { expression | DEFAULT } | ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) | ( column_name [, ...] ) = ( sub-SELECT ) } [, ...] [ WHERE condition ] Note: when using DO UPDATE SET, a special table alias excluded is created with the row proposed for insertion. UPDATE The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement: UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition; In this syntax: First, specify the name of the table that you want to update data after the UPDATE keyword. Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values. Third, determine which rows to update in the condition of the WHERE clause. The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table. UPDATE join using FROM clause Update a column based on the value of another column from another set. Basically comes down to joining tables. Warning: When using FROM you should ensure that the join produces at most one output row for each row to be modified. Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join. Example: UPDATE product SET net_price = price - price * discount FROM product_segment WHERE product.segment_id = product_segment.id RETURNING *; DELETE FROM basic syntax: DELETE FROM product WHERE name LIKE &#39;s%&#39; RETURNING *; when needing several tables: USING Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause) DELETE FROM t1 USING t2 WHERE t1.id = t2.id subquery SQL standard DELETE FROM contacts WHERE phone IN (SELECT phone FROM blacklist); Transactions A database transaction is a single unit of work that consists of one or more operations. A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &gt; referred to as ACID: Atomicity guarantees that the transaction completes in an all-or-nothing manner. Consistency ensures the change to data written to the database must be valid and follow predefined &gt; rules. Isolation determines how transaction integrity is visible to other transactions. Durability makes sure that transactions that have been committed will be stored in the database &gt; permanently. Example: -- start a transaction BEGIN; -- deduct 1000 from account 1 UPDATE accounts SET balance = balance - 1000 WHERE id = 1; -- add 1000 to account 2 UPDATE accounts SET balance = balance + 1000 WHERE id = 2; -- select the data from accounts SELECT id, name, balance FROM accounts; -- commit the transaction COMMIT; To Cancel an uncommitted transaction: use ROLLBACK Import/Export to CSV Use the “COPY” command. CREATE TABLE Basic syntax: CREATE TABLE accounts ( user_id serial PRIMARY KEY, username VARCHAR ( 50 ) UNIQUE NOT NULL, password VARCHAR ( 50 ) NOT NULL, email VARCHAR ( 255 ) UNIQUE NOT NULL, created_on TIMESTAMP NOT NULL, last_login TIMESTAMP ); Pseudo Types SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial Constraints Each row may be constrained: NOT NULL – ensures that values in a column cannot be NULL. UNIQUE – ensures the values in a column unique across the rows within the same table. PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table. CHECK – a CHECK constraint ensures the data must satisfy a boolean expression. FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys. Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)" />
+<meta property="og:description" content="PostgreSQL tests The following are my learning notes while doing the postgresql tutorial. References Tutorial Reference documentation Test environment Download postgresql for windows Installation Tutorial Note: remember the user/password… VS Code Extension: ckolkman.vscode-postgres Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options Test: Open the extension toolbar and select “Add Connection” with the server data Create a new file and set language type to “postgres” Enter a query Enter command: PostgreSQL: Run Query (F5) Tutorial Notes Select order of evaluation: FROM -&gt; WHERE -&gt; GROUP BY -&gt; HAVING -&gt; SELECT -&gt; DISTINCT -&gt; ORDER BY -&gt; LIMIT Concatenation: SELECT first_name || &#39; &#39; || last_name Aliases: AS If spaces -&gt; use double quotes operators LENGTH(first_name) COUNT SUM AVG ROUND(number, precision) ORDER BY NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless: ORDER BY num NULLS LAST; DISTINCT remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one The following will remove duplicates on the set (first_name, last_name): SELECT DISTINCT first_name, last_name FROM double_customer; DISTINCT ON A postgresql extension to SQL. Allow to specify the column to filter while also selecing others. The following will remove duplicates on first_name but select both columns: SELECT DISTINCT ON (first_name) first_name, last_name FROM double_customer; LIKE ‘’ Return true if field matches the pattern. 2 wildcards: ‘%’ matches any character, “_” matches exactly one Case sensitive SQL extension: ILIKE: case insensitive variant of LIKE; Aliases: ~~ LIKE ~~* ILIKE !~~ NOT LIKE !~~* NOT ILIKE BETWEEN Possible usages: LENGTH(first_name) IN (3, 4, 5) LENGTH(first_name) BETWEEN 3 AND 5 in which case the matching range includes 3 and 5 LIMIT Like “head”, limit the number of returned values is non-sql standard but widespread. SQL standard is: OFFSET start { ROW | ROWS } FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY WHERE Filter values from expression. It is possible to use another select statement, as in: SELECT customer_id FROM customer WHERE customer_id NOT IN (SELECT customer_id from rental); When filtering on dates, even if column field is timestamp, one can directly use: WHERE payment_date BETWEEN &#39;2007-02-07&#39; AND &#39;2007-02-15&#39;; JOINS Element of the FROM clause: [ INNER ] JOIN {LEFT RIGHT FULL} [OUTER] JOIN must be followed by ON or USING or NATURAL INNER JOIN == intersection of sets Example: find all transactions for a given client OUTER JOIN: LEFT = the source indicated just after the FROM clause includes the intersecting set plus the whole LEFT RIGHT FULL set, using ‘NULL’ values in columns for rows that are not intersecting returned in the order from the LEFT table, except for RIGHT JOIN Examples: LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN) SELECT * FROM basket_a , basket_b;returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: SELECT * FROM basket_a CROSS JOIN basket_b NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly. USING: USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both. GROUP BY / HAVING GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions. When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY Other elements can be selected through aggregate functions: SUM, COUNT, … HAVING introduces a filter to the group The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows. ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports) SELECT store_id, COUNT (customer_id) FROM customer GROUP BY store_id HAVING COUNT (customer_id) &gt; 300; Note we can’t use WHERE to perform an equivalent filter here. UNION / INTERSECT / EXCEPT [ALL | DISTINCT] Combine the output of more than one SELECT statement UNION: returns all rows that are in one or both of the result sets INTERSECT: returns all rows that are strictly in both result sets EXCEPT: returns the rows that are in the first result set but not in the second In all three cases, duplicate rows are eliminated unless ALL is specified. The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows. SUBQUERY Syntax: use parenthesis around the subquery The subquery may return one row (value) or a list of rows The outer query can use: IN operator (for instance in the where clause) EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns) If the subquery returns NULL, EXISTS returns true ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column) ANY returns true if operation is true for at least one element of the suquery ALL returns true if operation is true for all elements of the suquery PostgreSQL executes the query that contains a subquery in the following sequence: First, executes the subquery. Second, gets the result and passes it to the outer query. Third, executes the outer query. CTE / RECURSIVE Usefull to parse hierarchical data: subordinates of Manager X, BOM… INSERT INSERT INTO links (url, name) VALUES (&#39;http://www.postgresql.org&#39;,&#39;PostgreSQL&#39;), (&#39;https://www.yahoo.com&#39;,&#39;Yahoo&#39;), RETURNING id; RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id if no value is specified for a column, use default Merge Resolution: Upsert (update - insert) Inserting a new row with values already in the table is only a problem if the table defines constraints on some columns. For instance: CREATE TABLE customers ( customer_id serial PRIMARY KEY, name VARCHAR UNIQUE, email VARCHAR NOT NULL, active bool NOT NULL DEFAULT TRUE ); The UNIQUE constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised. To specify the behavior to handle this situation without error, use ON CONFLICT clause (postgresql extension). ON CONFLICT [ conflict_target ] conflict_action where conflict_target can be one of: ( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ] ON CONSTRAINT constraint_name and conflict_action is one of: DO NOTHING DO UPDATE SET { column_name = { expression | DEFAULT } | ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) | ( column_name [, ...] ) = ( sub-SELECT ) } [, ...] [ WHERE condition ] Note: when using DO UPDATE SET, a special table alias excluded is created with the row proposed for insertion. UPDATE The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement: UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition; In this syntax: First, specify the name of the table that you want to update data after the UPDATE keyword. Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values. Third, determine which rows to update in the condition of the WHERE clause. The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table. UPDATE join using FROM clause Update a column based on the value of another column from another set. Basically comes down to joining tables. Warning: When using FROM you should ensure that the join produces at most one output row for each row to be modified. Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join. Example: UPDATE product SET net_price = price - price * discount FROM product_segment WHERE product.segment_id = product_segment.id RETURNING *; DELETE FROM basic syntax: DELETE FROM product WHERE name LIKE &#39;s%&#39; RETURNING *; when needing several tables: USING Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause) DELETE FROM t1 USING t2 WHERE t1.id = t2.id subquery SQL standard DELETE FROM contacts WHERE phone IN (SELECT phone FROM blacklist); Transactions A database transaction is a single unit of work that consists of one or more operations. A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &gt; referred to as ACID: Atomicity guarantees that the transaction completes in an all-or-nothing manner. Consistency ensures the change to data written to the database must be valid and follow predefined &gt; rules. Isolation determines how transaction integrity is visible to other transactions. Durability makes sure that transactions that have been committed will be stored in the database &gt; permanently. Example: -- start a transaction BEGIN; -- deduct 1000 from account 1 UPDATE accounts SET balance = balance - 1000 WHERE id = 1; -- add 1000 to account 2 UPDATE accounts SET balance = balance + 1000 WHERE id = 2; -- select the data from accounts SELECT id, name, balance FROM accounts; -- commit the transaction COMMIT; To Cancel an uncommitted transaction: use ROLLBACK Import/Export to CSV Use the “COPY” command. CREATE TABLE Basic syntax: CREATE TABLE accounts ( user_id serial PRIMARY KEY, username VARCHAR ( 50 ) UNIQUE NOT NULL, password VARCHAR ( 50 ) NOT NULL, email VARCHAR ( 255 ) UNIQUE NOT NULL, created_on TIMESTAMP NOT NULL, last_login TIMESTAMP ); Pseudo Types SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial Constraints Each row may be constrained: NOT NULL – ensures that values in a column cannot be NULL. UNIQUE – ensures the values in a column unique across the rows within the same table. PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table. CHECK – a CHECK constraint ensures the data must satisfy a boolean expression. FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys. Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)" />
+<link rel="canonical" href="http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html" />
+<meta property="og:url" content="http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html" />
+<meta property="og:site_name" content="Emmanuel Pauchard" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-12-01T09:40:01+01:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="postgresql: tutorial notes" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-12-01T09:40:01+01:00","datePublished":"2022-12-01T09:40:01+01:00","description":"PostgreSQL tests The following are my learning notes while doing the postgresql tutorial. References Tutorial Reference documentation Test environment Download postgresql for windows Installation Tutorial Note: remember the user/password… VS Code Extension: ckolkman.vscode-postgres Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options Test: Open the extension toolbar and select “Add Connection” with the server data Create a new file and set language type to “postgres” Enter a query Enter command: PostgreSQL: Run Query (F5) Tutorial Notes Select order of evaluation: FROM -&gt; WHERE -&gt; GROUP BY -&gt; HAVING -&gt; SELECT -&gt; DISTINCT -&gt; ORDER BY -&gt; LIMIT Concatenation: SELECT first_name || &#39; &#39; || last_name Aliases: AS If spaces -&gt; use double quotes operators LENGTH(first_name) COUNT SUM AVG ROUND(number, precision) ORDER BY NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless: ORDER BY num NULLS LAST; DISTINCT remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one The following will remove duplicates on the set (first_name, last_name): SELECT DISTINCT first_name, last_name FROM double_customer; DISTINCT ON A postgresql extension to SQL. Allow to specify the column to filter while also selecing others. The following will remove duplicates on first_name but select both columns: SELECT DISTINCT ON (first_name) first_name, last_name FROM double_customer; LIKE ‘’ Return true if field matches the pattern. 2 wildcards: ‘%’ matches any character, “_” matches exactly one Case sensitive SQL extension: ILIKE: case insensitive variant of LIKE; Aliases: ~~ LIKE ~~* ILIKE !~~ NOT LIKE !~~* NOT ILIKE BETWEEN Possible usages: LENGTH(first_name) IN (3, 4, 5) LENGTH(first_name) BETWEEN 3 AND 5 in which case the matching range includes 3 and 5 LIMIT Like “head”, limit the number of returned values is non-sql standard but widespread. SQL standard is: OFFSET start { ROW | ROWS } FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY WHERE Filter values from expression. It is possible to use another select statement, as in: SELECT customer_id FROM customer WHERE customer_id NOT IN (SELECT customer_id from rental); When filtering on dates, even if column field is timestamp, one can directly use: WHERE payment_date BETWEEN &#39;2007-02-07&#39; AND &#39;2007-02-15&#39;; JOINS Element of the FROM clause: [ INNER ] JOIN {LEFT RIGHT FULL} [OUTER] JOIN must be followed by ON or USING or NATURAL INNER JOIN == intersection of sets Example: find all transactions for a given client OUTER JOIN: LEFT = the source indicated just after the FROM clause includes the intersecting set plus the whole LEFT RIGHT FULL set, using ‘NULL’ values in columns for rows that are not intersecting returned in the order from the LEFT table, except for RIGHT JOIN Examples: LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN) SELECT * FROM basket_a , basket_b;returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: SELECT * FROM basket_a CROSS JOIN basket_b NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly. USING: USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both. GROUP BY / HAVING GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions. When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY Other elements can be selected through aggregate functions: SUM, COUNT, … HAVING introduces a filter to the group The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows. ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports) SELECT store_id, COUNT (customer_id) FROM customer GROUP BY store_id HAVING COUNT (customer_id) &gt; 300; Note we can’t use WHERE to perform an equivalent filter here. UNION / INTERSECT / EXCEPT [ALL | DISTINCT] Combine the output of more than one SELECT statement UNION: returns all rows that are in one or both of the result sets INTERSECT: returns all rows that are strictly in both result sets EXCEPT: returns the rows that are in the first result set but not in the second In all three cases, duplicate rows are eliminated unless ALL is specified. The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows. SUBQUERY Syntax: use parenthesis around the subquery The subquery may return one row (value) or a list of rows The outer query can use: IN operator (for instance in the where clause) EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns) If the subquery returns NULL, EXISTS returns true ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column) ANY returns true if operation is true for at least one element of the suquery ALL returns true if operation is true for all elements of the suquery PostgreSQL executes the query that contains a subquery in the following sequence: First, executes the subquery. Second, gets the result and passes it to the outer query. Third, executes the outer query. CTE / RECURSIVE Usefull to parse hierarchical data: subordinates of Manager X, BOM… INSERT INSERT INTO links (url, name) VALUES (&#39;http://www.postgresql.org&#39;,&#39;PostgreSQL&#39;), (&#39;https://www.yahoo.com&#39;,&#39;Yahoo&#39;), RETURNING id; RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id if no value is specified for a column, use default Merge Resolution: Upsert (update - insert) Inserting a new row with values already in the table is only a problem if the table defines constraints on some columns. For instance: CREATE TABLE customers ( customer_id serial PRIMARY KEY, name VARCHAR UNIQUE, email VARCHAR NOT NULL, active bool NOT NULL DEFAULT TRUE ); The UNIQUE constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised. To specify the behavior to handle this situation without error, use ON CONFLICT clause (postgresql extension). ON CONFLICT [ conflict_target ] conflict_action where conflict_target can be one of: ( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ] ON CONSTRAINT constraint_name and conflict_action is one of: DO NOTHING DO UPDATE SET { column_name = { expression | DEFAULT } | ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) | ( column_name [, ...] ) = ( sub-SELECT ) } [, ...] [ WHERE condition ] Note: when using DO UPDATE SET, a special table alias excluded is created with the row proposed for insertion. UPDATE The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement: UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition; In this syntax: First, specify the name of the table that you want to update data after the UPDATE keyword. Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values. Third, determine which rows to update in the condition of the WHERE clause. The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table. UPDATE join using FROM clause Update a column based on the value of another column from another set. Basically comes down to joining tables. Warning: When using FROM you should ensure that the join produces at most one output row for each row to be modified. Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join. Example: UPDATE product SET net_price = price - price * discount FROM product_segment WHERE product.segment_id = product_segment.id RETURNING *; DELETE FROM basic syntax: DELETE FROM product WHERE name LIKE &#39;s%&#39; RETURNING *; when needing several tables: USING Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause) DELETE FROM t1 USING t2 WHERE t1.id = t2.id subquery SQL standard DELETE FROM contacts WHERE phone IN (SELECT phone FROM blacklist); Transactions A database transaction is a single unit of work that consists of one or more operations. A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &gt; referred to as ACID: Atomicity guarantees that the transaction completes in an all-or-nothing manner. Consistency ensures the change to data written to the database must be valid and follow predefined &gt; rules. Isolation determines how transaction integrity is visible to other transactions. Durability makes sure that transactions that have been committed will be stored in the database &gt; permanently. Example: -- start a transaction BEGIN; -- deduct 1000 from account 1 UPDATE accounts SET balance = balance - 1000 WHERE id = 1; -- add 1000 to account 2 UPDATE accounts SET balance = balance + 1000 WHERE id = 2; -- select the data from accounts SELECT id, name, balance FROM accounts; -- commit the transaction COMMIT; To Cancel an uncommitted transaction: use ROLLBACK Import/Export to CSV Use the “COPY” command. CREATE TABLE Basic syntax: CREATE TABLE accounts ( user_id serial PRIMARY KEY, username VARCHAR ( 50 ) UNIQUE NOT NULL, password VARCHAR ( 50 ) NOT NULL, email VARCHAR ( 255 ) UNIQUE NOT NULL, created_on TIMESTAMP NOT NULL, last_login TIMESTAMP ); Pseudo Types SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial Constraints Each row may be constrained: NOT NULL – ensures that values in a column cannot be NULL. UNIQUE – ensures the values in a column unique across the rows within the same table. PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table. CHECK – a CHECK constraint ensures the data must satisfy a boolean expression. FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys. Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)","headline":"postgresql: tutorial notes","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html"},"url":"http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/blog/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/blog/feed.xml" title="Emmanuel Pauchard" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/blog/">Emmanuel Pauchard</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/blog/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">postgresql: tutorial notes</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-12-01T09:40:01+01:00" itemprop="datePublished">Dec 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="postgresql-tests">PostgreSQL tests</h1>
+
+<p>The following are my learning notes while doing the postgresql tutorial.</p>
+
+<h1 id="references">References</h1>
+<ul>
+  <li><a href="https://www.postgresqltutorial.com/postgresql-tutorial/">Tutorial</a></li>
+  <li><a href="https://www.postgresql.org/docs/15/sql-update.html">Reference documentation</a></li>
+</ul>
+
+<h1 id="test-environment">Test environment</h1>
+<h2 id="download-postgresql-for-windows">Download <a href="https://www.postgresql.org/download/windows/">postgresql for windows</a></h2>
+<p><a href="https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql/">Installation Tutorial</a></p>
+<blockquote>
+  <p>Note: remember the user/password…</p>
+</blockquote>
+
+<h2 id="vs-code">VS Code</h2>
+<h3 id="extension-ckolkmanvscode-postgres">Extension: ckolkman.vscode-postgres</h3>
+<blockquote>
+  <p>Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options</p>
+</blockquote>
+
+<h3 id="test">Test:</h3>
+<ol>
+  <li>Open the extension toolbar and select “Add Connection” with the server data</li>
+  <li>Create a new file and set language type to “postgres”</li>
+  <li>Enter a query</li>
+  <li>Enter command: PostgreSQL: Run Query (F5)</li>
+</ol>
+
+<h1 id="tutorial-notes">Tutorial Notes</h1>
+
+<h2 id="select">Select</h2>
+<h3 id="order-of-evaluation">order of evaluation:</h3>
+<p>FROM -&gt; WHERE -&gt; GROUP BY -&gt; HAVING -&gt; SELECT -&gt; DISTINCT -&gt; ORDER BY -&gt; LIMIT</p>
+
+<h3 id="concatenation">Concatenation:</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+   first_name || ' ' || last_name
+</code></pre></div></div>
+
+<h3 id="aliases-as">Aliases: AS</h3>
+<p>If spaces -&gt; use double quotes</p>
+
+<h3 id="operators">operators</h3>
+<ul>
+  <li>LENGTH(first_name)</li>
+  <li>COUNT</li>
+  <li>SUM</li>
+  <li>AVG</li>
+  <li>ROUND(number, precision)</li>
+</ul>
+
+<h3 id="order-by">ORDER BY</h3>
+<p>NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ORDER BY num NULLS LAST;
+</code></pre></div></div>
+
+<h3 id="distinct">DISTINCT</h3>
+<p>remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one
+The following will remove duplicates on the set (first_name, last_name):</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+DISTINCT first_name, last_name
+FROM double_customer;
+</code></pre></div></div>
+
+<h3 id="distinct-on">DISTINCT ON</h3>
+<p>A postgresql extension to SQL. Allow to specify the column to filter while also selecing others.
+The following will remove duplicates on first_name but select both columns:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+DISTINCT ON (first_name) first_name, last_name
+FROM double_customer;
+</code></pre></div></div>
+
+<h3 id="like-">LIKE ‘’</h3>
+<p>Return true if field matches the pattern.
+2 wildcards: ‘%’ matches any character, “_” matches exactly one
+Case sensitive</p>
+
+<ul>
+  <li>SQL extension: ILIKE: case insensitive variant of LIKE; Aliases:
+    <ul>
+      <li>~~  LIKE</li>
+      <li>~~* ILIKE</li>
+      <li>!~~ NOT LIKE</li>
+      <li>!~~* NOT ILIKE</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="between">BETWEEN</h3>
+<p>Possible usages:</p>
+<ul>
+  <li>LENGTH(first_name) IN (3, 4, 5)</li>
+  <li>LENGTH(first_name) BETWEEN 3 AND 5
+    <ul>
+      <li>in which case the matching range includes 3 and 5</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="limit">LIMIT</h3>
+<p>Like “head”, limit the number of returned values
+is non-sql standard but widespread.</p>
+
+<p>SQL standard is:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>OFFSET start { ROW | ROWS }
+FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY
+</code></pre></div></div>
+
+<h3 id="where">WHERE</h3>
+<p>Filter values from expression.
+It is possible to use another select statement, as in:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+    customer_id
+FROM
+	customer
+WHERE
+	customer_id NOT IN (SELECT customer_id from rental);
+</code></pre></div></div>
+
+<p>When filtering on dates, even if column field is timestamp, one can directly use:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>WHERE
+	payment_date BETWEEN '2007-02-07' AND '2007-02-15';
+</code></pre></div></div>
+
+<h3 id="joins">JOINS</h3>
+<p>Element of the FROM clause:</p>
+<ul>
+  <li>[ INNER ] JOIN</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>{LEFT</td>
+          <td>RIGHT</td>
+          <td>FULL} [OUTER] JOIN</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>
+    <p>must be followed by ON or USING or NATURAL</p>
+  </li>
+  <li>INNER JOIN == intersection of sets
+    <ul>
+      <li>Example: find all transactions for a given client</li>
+    </ul>
+  </li>
+  <li>OUTER JOIN:
+    <ul>
+      <li>LEFT = the source indicated just after the FROM clause</li>
+      <li>
+        <table>
+          <tbody>
+            <tr>
+              <td>includes the intersecting set plus the whole LEFT</td>
+              <td>RIGHT</td>
+              <td>FULL set, using ‘NULL’ values in columns for rows that are not intersecting</td>
+            </tr>
+          </tbody>
+        </table>
+      </li>
+      <li>returned in the order from the LEFT table, except for RIGHT JOIN
+        <ul>
+          <li>Examples:
+            <ul>
+              <li>LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN)</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        <p><code class="language-plaintext highlighter-rouge">SELECT * FROM basket_a , basket_b;</code>returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: <code class="language-plaintext highlighter-rouge">SELECT * FROM basket_a CROSS JOIN basket_b</code></p>
+      </li>
+      <li>NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly.</li>
+    </ul>
+  </li>
+  <li>USING:
+    <blockquote>
+      <p>USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both.</p>
+    </blockquote>
+  </li>
+</ul>
+
+<h3 id="group-by--having">GROUP BY / HAVING</h3>
+<p>GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions.</p>
+<ul>
+  <li>When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY</li>
+  <li>Other elements can be selected through aggregate functions: SUM, COUNT, …</li>
+  <li>HAVING introduces a filter to the group
+    <blockquote>
+      <p>The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows.</p>
+    </blockquote>
+  </li>
+  <li>ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports)
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+  store_id,
+  COUNT (customer_id)
+FROM
+  customer
+GROUP BY
+  store_id
+HAVING
+  COUNT (customer_id) &gt; 300;
+</code></pre></div>    </div>
+    <p>Note we can’t use WHERE to perform an equivalent filter here.</p>
+  </li>
+</ul>
+
+<h3 id="union--intersect--except-all--distinct">UNION / INTERSECT / EXCEPT [ALL | DISTINCT]</h3>
+<p>Combine the output of more than one SELECT statement</p>
+<ul>
+  <li>UNION: returns all rows that are in one or both of the result sets</li>
+  <li>INTERSECT: returns all rows that are strictly in both result sets</li>
+  <li>EXCEPT: returns the rows that are in the first result set but not in the second</li>
+</ul>
+
+<p>In all three cases, duplicate rows are eliminated unless ALL is specified.
+The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows.</p>
+
+<h3 id="subquery">SUBQUERY</h3>
+<ul>
+  <li>Syntax: use parenthesis around the subquery</li>
+  <li>The subquery may return one row (value) or a list of rows</li>
+  <li>The outer query can use:
+    <ul>
+      <li>IN operator (for instance in the where clause)</li>
+      <li>EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns)
+        <ul>
+          <li>If the subquery returns NULL, EXISTS returns true</li>
+        </ul>
+      </li>
+      <li>ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column)
+        <ul>
+          <li>ANY returns true if operation is true for at least one element of the suquery</li>
+          <li>ALL returns true if operation is true for all elements of the suquery
+            <blockquote>
+              <p>PostgreSQL executes the query that contains a subquery in the following sequence:</p>
+              <ul>
+                <li>First, executes the subquery.</li>
+                <li>Second, gets the result and passes it to the outer query.</li>
+                <li>Third, executes the outer query.</li>
+              </ul>
+            </blockquote>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="cte--recursive">CTE / RECURSIVE</h3>
+<p>Usefull to parse hierarchical data: subordinates of Manager X, BOM…</p>
+
+<h2 id="insert">INSERT</h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>INSERT INTO links (url, name)
+VALUES
+   ('http://www.postgresql.org','PostgreSQL'),
+   ('https://www.yahoo.com','Yahoo'),
+RETURNING id;
+</code></pre></div></div>
+
+<ul>
+  <li>RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id</li>
+  <li>if no value is specified for a column, use default</li>
+</ul>
+
+<h3 id="merge-resolution-upsert-update---insert">Merge Resolution: Upsert (update - insert)</h3>
+<p>Inserting a new row with values already in the table is only a problem if the table defines <strong>constraints</strong> on some columns.</p>
+
+<p>For instance:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CREATE TABLE customers (
+	customer_id serial PRIMARY KEY,
+	name VARCHAR UNIQUE,
+	email VARCHAR NOT NULL,
+	active bool NOT NULL DEFAULT TRUE
+);
+</code></pre></div></div>
+<p>The <em>UNIQUE</em> constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised.</p>
+
+<p>To specify the behavior to handle this situation without error, use <strong>ON CONFLICT</strong> clause (postgresql extension).</p>
+
+<blockquote>
+  <p>ON CONFLICT [ conflict_target ] conflict_action</p>
+
+  <p>where conflict_target can be one of:</p>
+
+  <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ]
+ON CONSTRAINT constraint_name
+</code></pre></div>  </div>
+
+  <p>and conflict_action is one of:</p>
+
+  <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DO NOTHING
+DO UPDATE SET { column_name = { expression | DEFAULT } |
+                ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) |
+                ( column_name [, ...] ) = ( sub-SELECT )
+              } [, ...]
+          [ WHERE condition ]
+</code></pre></div>  </div>
+</blockquote>
+
+<ul>
+  <li>Note: when using <em>DO UPDATE SET</em>, a special table alias <strong>excluded</strong> is created with the row proposed for insertion.</li>
+</ul>
+
+<h2 id="update">UPDATE</h2>
+<blockquote>
+  <p>The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement:</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UPDATE table_name
+SET column1 = value1,
+    column2 = value2,
+    ...
+WHERE condition;
+</code></pre></div></div>
+
+<blockquote>
+  <p>In this syntax:</p>
+  <ul>
+    <li>First, specify the name of the table that you want to update data after the UPDATE keyword.</li>
+    <li>Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values.</li>
+    <li>Third, determine which rows to update in the condition of the WHERE clause.
+The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table.</li>
+  </ul>
+</blockquote>
+
+<h3 id="update-join-using-from-clause">UPDATE join using FROM clause</h3>
+<p>Update a column based on the value of another column from another set.</p>
+
+<p>Basically comes down to joining tables. Warning:</p>
+<blockquote>
+  <p>When using FROM you should ensure that the join produces at most one output row for each row to be modified.</p>
+</blockquote>
+
+<blockquote>
+  <p>Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join.</p>
+</blockquote>
+
+<p>Example:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UPDATE product
+SET net_price = price - price * discount
+FROM product_segment
+WHERE product.segment_id = product_segment.id
+RETURNING *;
+</code></pre></div></div>
+
+<h2 id="delete-from">DELETE FROM</h2>
+<h3 id="basic-syntax">basic syntax:</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DELETE FROM product WHERE name LIKE 's%' RETURNING *;
+</code></pre></div></div>
+
+<h3 id="when-needing-several-tables-using">when needing several tables: USING</h3>
+<p>Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause)</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DELETE FROM t1
+USING t2
+WHERE t1.id = t2.id
+</code></pre></div></div>
+
+<h3 id="subquery-1">subquery</h3>
+<p>SQL standard</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DELETE FROM contacts
+WHERE phone IN (SELECT phone FROM blacklist);
+</code></pre></div></div>
+
+<h2 id="transactions">Transactions</h2>
+<blockquote>
+  <p>A database transaction is a single unit of work that consists of one or more operations.</p>
+</blockquote>
+
+<blockquote>
+  <p>A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &gt; referred to as ACID:</p>
+
+  <p>Atomicity guarantees that the transaction completes in an all-or-nothing manner.
+Consistency ensures the change to data written to the database must be valid and follow predefined &gt; rules.
+Isolation determines how transaction integrity is visible to other transactions.
+Durability makes sure that transactions that have been committed will be stored in the database &gt; permanently.</p>
+</blockquote>
+
+<p>Example:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>-- start a transaction
+BEGIN;
+
+-- deduct 1000 from account 1
+UPDATE accounts
+SET balance = balance - 1000
+WHERE id = 1;
+
+-- add 1000 to account 2
+UPDATE accounts
+SET balance = balance + 1000
+WHERE id = 2;
+
+-- select the data from accounts
+SELECT id, name, balance
+FROM accounts;
+
+-- commit the transaction
+COMMIT;
+</code></pre></div></div>
+
+<ul>
+  <li>To Cancel an uncommitted transaction: use ROLLBACK</li>
+</ul>
+
+<h1 id="importexport-to-csv">Import/Export to CSV</h1>
+<p>Use the “COPY” command.</p>
+
+<h1 id="create-table">CREATE TABLE</h1>
+<p>Basic syntax:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CREATE TABLE accounts (
+	user_id serial PRIMARY KEY,
+	username VARCHAR ( 50 ) UNIQUE NOT NULL,
+	password VARCHAR ( 50 ) NOT NULL,
+	email VARCHAR ( 255 ) UNIQUE NOT NULL,
+	created_on TIMESTAMP NOT NULL,
+        last_login TIMESTAMP
+);
+</code></pre></div></div>
+
+<h2 id="pseudo-types">Pseudo Types</h2>
+<ul>
+  <li>SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial</li>
+</ul>
+
+<h2 id="constraints">Constraints</h2>
+<p>Each row may be constrained:</p>
+<blockquote>
+  <ul>
+    <li>NOT NULL – ensures that values in a column cannot be NULL.</li>
+    <li>UNIQUE – ensures the values in a column unique across the rows within the same table.</li>
+    <li>PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table.</li>
+    <li>CHECK – a CHECK constraint ensures the data must satisfy a boolean expression.</li>
+    <li>FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys.</li>
+  </ul>
+</blockquote>
+
+<h2 id="create-table-from-another-table-select-into--create-table--as--preferred">Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)</h2>
+
+  </div><a class="u-url" href="/blog/tutorial/postgresql/2022/12/01/postgresql.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/blog/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Emmanuel Pauchard</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Emmanuel Pauchard</li><li><a class="u-email" href="mailto:emmanuel.pauchard@gmail.com">emmanuel.pauchard@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/EmmanuelPauchard"><svg class="svg-icon"><use xlink:href="/blog/assets/minima-social-icons.svg#github"></use></svg> <span class="username">EmmanuelPauchard</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>My notes and thoughts.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

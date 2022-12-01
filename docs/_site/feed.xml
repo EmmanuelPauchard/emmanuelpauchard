@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.2">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2022-12-01T10:28:40+01:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">Emmanuel Pauchard</title><subtitle>My notes and thoughts.</subtitle><entry><title type="html">postgresql: tutorial notes</title><link href="http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html" rel="alternate" type="text/html" title="postgresql: tutorial notes" /><published>2022-12-01T09:40:01+01:00</published><updated>2022-12-01T09:40:01+01:00</updated><id>http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql</id><content type="html" xml:base="http://localhost:4000/blog/tutorial/postgresql/2022/12/01/postgresql.html">&lt;h1 id=&quot;postgresql-tests&quot;&gt;PostgreSQL tests&lt;/h1&gt;
+
+&lt;p&gt;The following are my learning notes while doing the postgresql tutorial.&lt;/p&gt;
+
+&lt;h1 id=&quot;references&quot;&gt;References&lt;/h1&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.postgresqltutorial.com/postgresql-tutorial/&quot;&gt;Tutorial&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.postgresql.org/docs/15/sql-update.html&quot;&gt;Reference documentation&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;test-environment&quot;&gt;Test environment&lt;/h1&gt;
+&lt;h2 id=&quot;download-postgresql-for-windows&quot;&gt;Download &lt;a href=&quot;https://www.postgresql.org/download/windows/&quot;&gt;postgresql for windows&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&quot;https://www.postgresqltutorial.com/postgresql-getting-started/install-postgresql/&quot;&gt;Installation Tutorial&lt;/a&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;Note: remember the user/password…&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;vs-code&quot;&gt;VS Code&lt;/h2&gt;
+&lt;h3 id=&quot;extension-ckolkmanvscode-postgres&quot;&gt;Extension: ckolkman.vscode-postgres&lt;/h3&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;test&quot;&gt;Test:&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Open the extension toolbar and select “Add Connection” with the server data&lt;/li&gt;
+  &lt;li&gt;Create a new file and set language type to “postgres”&lt;/li&gt;
+  &lt;li&gt;Enter a query&lt;/li&gt;
+  &lt;li&gt;Enter command: PostgreSQL: Run Query (F5)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h1 id=&quot;tutorial-notes&quot;&gt;Tutorial Notes&lt;/h1&gt;
+
+&lt;h2 id=&quot;select&quot;&gt;Select&lt;/h2&gt;
+&lt;h3 id=&quot;order-of-evaluation&quot;&gt;order of evaluation:&lt;/h3&gt;
+&lt;p&gt;FROM -&amp;gt; WHERE -&amp;gt; GROUP BY -&amp;gt; HAVING -&amp;gt; SELECT -&amp;gt; DISTINCT -&amp;gt; ORDER BY -&amp;gt; LIMIT&lt;/p&gt;
+
+&lt;h3 id=&quot;concatenation&quot;&gt;Concatenation:&lt;/h3&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT
+   first_name || ' ' || last_name
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;aliases-as&quot;&gt;Aliases: AS&lt;/h3&gt;
+&lt;p&gt;If spaces -&amp;gt; use double quotes&lt;/p&gt;
+
+&lt;h3 id=&quot;operators&quot;&gt;operators&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;LENGTH(first_name)&lt;/li&gt;
+  &lt;li&gt;COUNT&lt;/li&gt;
+  &lt;li&gt;SUM&lt;/li&gt;
+  &lt;li&gt;AVG&lt;/li&gt;
+  &lt;li&gt;ROUND(number, precision)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;order-by&quot;&gt;ORDER BY&lt;/h3&gt;
+&lt;p&gt;NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ORDER BY num NULLS LAST;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;distinct&quot;&gt;DISTINCT&lt;/h3&gt;
+&lt;p&gt;remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one
+The following will remove duplicates on the set (first_name, last_name):&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT
+DISTINCT first_name, last_name
+FROM double_customer;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;distinct-on&quot;&gt;DISTINCT ON&lt;/h3&gt;
+&lt;p&gt;A postgresql extension to SQL. Allow to specify the column to filter while also selecing others.
+The following will remove duplicates on first_name but select both columns:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT
+DISTINCT ON (first_name) first_name, last_name
+FROM double_customer;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;like-&quot;&gt;LIKE ‘’&lt;/h3&gt;
+&lt;p&gt;Return true if field matches the pattern.
+2 wildcards: ‘%’ matches any character, “_” matches exactly one
+Case sensitive&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;SQL extension: ILIKE: case insensitive variant of LIKE; Aliases:
+    &lt;ul&gt;
+      &lt;li&gt;~~  LIKE&lt;/li&gt;
+      &lt;li&gt;~~* ILIKE&lt;/li&gt;
+      &lt;li&gt;!~~ NOT LIKE&lt;/li&gt;
+      &lt;li&gt;!~~* NOT ILIKE&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;between&quot;&gt;BETWEEN&lt;/h3&gt;
+&lt;p&gt;Possible usages:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;LENGTH(first_name) IN (3, 4, 5)&lt;/li&gt;
+  &lt;li&gt;LENGTH(first_name) BETWEEN 3 AND 5
+    &lt;ul&gt;
+      &lt;li&gt;in which case the matching range includes 3 and 5&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;limit&quot;&gt;LIMIT&lt;/h3&gt;
+&lt;p&gt;Like “head”, limit the number of returned values
+is non-sql standard but widespread.&lt;/p&gt;
+
+&lt;p&gt;SQL standard is:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;OFFSET start { ROW | ROWS }
+FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;where&quot;&gt;WHERE&lt;/h3&gt;
+&lt;p&gt;Filter values from expression.
+It is possible to use another select statement, as in:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT
+    customer_id
+FROM
+	customer
+WHERE
+	customer_id NOT IN (SELECT customer_id from rental);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;When filtering on dates, even if column field is timestamp, one can directly use:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;WHERE
+	payment_date BETWEEN '2007-02-07' AND '2007-02-15';
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;joins&quot;&gt;JOINS&lt;/h3&gt;
+&lt;p&gt;Element of the FROM clause:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;[ INNER ] JOIN&lt;/li&gt;
+  &lt;li&gt;
+    &lt;table&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;
+          &lt;td&gt;{LEFT&lt;/td&gt;
+          &lt;td&gt;RIGHT&lt;/td&gt;
+          &lt;td&gt;FULL} [OUTER] JOIN&lt;/td&gt;
+        &lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;must be followed by ON or USING or NATURAL&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;INNER JOIN == intersection of sets
+    &lt;ul&gt;
+      &lt;li&gt;Example: find all transactions for a given client&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;OUTER JOIN:
+    &lt;ul&gt;
+      &lt;li&gt;LEFT = the source indicated just after the FROM clause&lt;/li&gt;
+      &lt;li&gt;
+        &lt;table&gt;
+          &lt;tbody&gt;
+            &lt;tr&gt;
+              &lt;td&gt;includes the intersecting set plus the whole LEFT&lt;/td&gt;
+              &lt;td&gt;RIGHT&lt;/td&gt;
+              &lt;td&gt;FULL set, using ‘NULL’ values in columns for rows that are not intersecting&lt;/td&gt;
+            &lt;/tr&gt;
+          &lt;/tbody&gt;
+        &lt;/table&gt;
+      &lt;/li&gt;
+      &lt;li&gt;returned in the order from the LEFT table, except for RIGHT JOIN
+        &lt;ul&gt;
+          &lt;li&gt;Examples:
+            &lt;ul&gt;
+              &lt;li&gt;LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN)&lt;/li&gt;
+            &lt;/ul&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SELECT * FROM basket_a , basket_b;&lt;/code&gt;returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SELECT * FROM basket_a CROSS JOIN basket_b&lt;/code&gt;&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly.&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;USING:
+    &lt;blockquote&gt;
+      &lt;p&gt;USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both.&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;group-by--having&quot;&gt;GROUP BY / HAVING&lt;/h3&gt;
+&lt;p&gt;GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY&lt;/li&gt;
+  &lt;li&gt;Other elements can be selected through aggregate functions: SUM, COUNT, …&lt;/li&gt;
+  &lt;li&gt;HAVING introduces a filter to the group
+    &lt;blockquote&gt;
+      &lt;p&gt;The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows.&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports)
+    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SELECT
+  store_id,
+  COUNT (customer_id)
+FROM
+  customer
+GROUP BY
+  store_id
+HAVING
+  COUNT (customer_id) &amp;gt; 300;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+    &lt;p&gt;Note we can’t use WHERE to perform an equivalent filter here.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;union--intersect--except-all--distinct&quot;&gt;UNION / INTERSECT / EXCEPT [ALL | DISTINCT]&lt;/h3&gt;
+&lt;p&gt;Combine the output of more than one SELECT statement&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;UNION: returns all rows that are in one or both of the result sets&lt;/li&gt;
+  &lt;li&gt;INTERSECT: returns all rows that are strictly in both result sets&lt;/li&gt;
+  &lt;li&gt;EXCEPT: returns the rows that are in the first result set but not in the second&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In all three cases, duplicate rows are eliminated unless ALL is specified.
+The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows.&lt;/p&gt;
+
+&lt;h3 id=&quot;subquery&quot;&gt;SUBQUERY&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Syntax: use parenthesis around the subquery&lt;/li&gt;
+  &lt;li&gt;The subquery may return one row (value) or a list of rows&lt;/li&gt;
+  &lt;li&gt;The outer query can use:
+    &lt;ul&gt;
+      &lt;li&gt;IN operator (for instance in the where clause)&lt;/li&gt;
+      &lt;li&gt;EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns)
+        &lt;ul&gt;
+          &lt;li&gt;If the subquery returns NULL, EXISTS returns true&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+      &lt;li&gt;ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column)
+        &lt;ul&gt;
+          &lt;li&gt;ANY returns true if operation is true for at least one element of the suquery&lt;/li&gt;
+          &lt;li&gt;ALL returns true if operation is true for all elements of the suquery
+            &lt;blockquote&gt;
+              &lt;p&gt;PostgreSQL executes the query that contains a subquery in the following sequence:&lt;/p&gt;
+              &lt;ul&gt;
+                &lt;li&gt;First, executes the subquery.&lt;/li&gt;
+                &lt;li&gt;Second, gets the result and passes it to the outer query.&lt;/li&gt;
+                &lt;li&gt;Third, executes the outer query.&lt;/li&gt;
+              &lt;/ul&gt;
+            &lt;/blockquote&gt;
+          &lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;cte--recursive&quot;&gt;CTE / RECURSIVE&lt;/h3&gt;
+&lt;p&gt;Usefull to parse hierarchical data: subordinates of Manager X, BOM…&lt;/p&gt;
+
+&lt;h2 id=&quot;insert&quot;&gt;INSERT&lt;/h2&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;INSERT INTO links (url, name)
+VALUES
+   ('http://www.postgresql.org','PostgreSQL'),
+   ('https://www.yahoo.com','Yahoo'),
+RETURNING id;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id&lt;/li&gt;
+  &lt;li&gt;if no value is specified for a column, use default&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;merge-resolution-upsert-update---insert&quot;&gt;Merge Resolution: Upsert (update - insert)&lt;/h3&gt;
+&lt;p&gt;Inserting a new row with values already in the table is only a problem if the table defines &lt;strong&gt;constraints&lt;/strong&gt; on some columns.&lt;/p&gt;
+
+&lt;p&gt;For instance:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CREATE TABLE customers (
+	customer_id serial PRIMARY KEY,
+	name VARCHAR UNIQUE,
+	email VARCHAR NOT NULL,
+	active bool NOT NULL DEFAULT TRUE
+);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;em&gt;UNIQUE&lt;/em&gt; constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised.&lt;/p&gt;
+
+&lt;p&gt;To specify the behavior to handle this situation without error, use &lt;strong&gt;ON CONFLICT&lt;/strong&gt; clause (postgresql extension).&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;ON CONFLICT [ conflict_target ] conflict_action&lt;/p&gt;
+
+  &lt;p&gt;where conflict_target can be one of:&lt;/p&gt;
+
+  &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ]
+ON CONSTRAINT constraint_name
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;  &lt;/div&gt;
+
+  &lt;p&gt;and conflict_action is one of:&lt;/p&gt;
+
+  &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DO NOTHING
+DO UPDATE SET { column_name = { expression | DEFAULT } |
+                ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) |
+                ( column_name [, ...] ) = ( sub-SELECT )
+              } [, ...]
+          [ WHERE condition ]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;  &lt;/div&gt;
+&lt;/blockquote&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Note: when using &lt;em&gt;DO UPDATE SET&lt;/em&gt;, a special table alias &lt;strong&gt;excluded&lt;/strong&gt; is created with the row proposed for insertion.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;update&quot;&gt;UPDATE&lt;/h2&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement:&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;UPDATE table_name
+SET column1 = value1,
+    column2 = value2,
+    ...
+WHERE condition;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;In this syntax:&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;First, specify the name of the table that you want to update data after the UPDATE keyword.&lt;/li&gt;
+    &lt;li&gt;Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values.&lt;/li&gt;
+    &lt;li&gt;Third, determine which rows to update in the condition of the WHERE clause.
+The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table.&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;update-join-using-from-clause&quot;&gt;UPDATE join using FROM clause&lt;/h3&gt;
+&lt;p&gt;Update a column based on the value of another column from another set.&lt;/p&gt;
+
+&lt;p&gt;Basically comes down to joining tables. Warning:&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;When using FROM you should ensure that the join produces at most one output row for each row to be modified.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;UPDATE product
+SET net_price = price - price * discount
+FROM product_segment
+WHERE product.segment_id = product_segment.id
+RETURNING *;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;delete-from&quot;&gt;DELETE FROM&lt;/h2&gt;
+&lt;h3 id=&quot;basic-syntax&quot;&gt;basic syntax:&lt;/h3&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE FROM product WHERE name LIKE 's%' RETURNING *;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;when-needing-several-tables-using&quot;&gt;when needing several tables: USING&lt;/h3&gt;
+&lt;p&gt;Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause)&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE FROM t1
+USING t2
+WHERE t1.id = t2.id
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;subquery-1&quot;&gt;subquery&lt;/h3&gt;
+&lt;p&gt;SQL standard&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;DELETE FROM contacts
+WHERE phone IN (SELECT phone FROM blacklist);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;transactions&quot;&gt;Transactions&lt;/h2&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;A database transaction is a single unit of work that consists of one or more operations.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &amp;gt; referred to as ACID:&lt;/p&gt;
+
+  &lt;p&gt;Atomicity guarantees that the transaction completes in an all-or-nothing manner.
+Consistency ensures the change to data written to the database must be valid and follow predefined &amp;gt; rules.
+Isolation determines how transaction integrity is visible to other transactions.
+Durability makes sure that transactions that have been committed will be stored in the database &amp;gt; permanently.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;-- start a transaction
+BEGIN;
+
+-- deduct 1000 from account 1
+UPDATE accounts
+SET balance = balance - 1000
+WHERE id = 1;
+
+-- add 1000 to account 2
+UPDATE accounts
+SET balance = balance + 1000
+WHERE id = 2;
+
+-- select the data from accounts
+SELECT id, name, balance
+FROM accounts;
+
+-- commit the transaction
+COMMIT;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;To Cancel an uncommitted transaction: use ROLLBACK&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;importexport-to-csv&quot;&gt;Import/Export to CSV&lt;/h1&gt;
+&lt;p&gt;Use the “COPY” command.&lt;/p&gt;
+
+&lt;h1 id=&quot;create-table&quot;&gt;CREATE TABLE&lt;/h1&gt;
+&lt;p&gt;Basic syntax:&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;CREATE TABLE accounts (
+	user_id serial PRIMARY KEY,
+	username VARCHAR ( 50 ) UNIQUE NOT NULL,
+	password VARCHAR ( 50 ) NOT NULL,
+	email VARCHAR ( 255 ) UNIQUE NOT NULL,
+	created_on TIMESTAMP NOT NULL,
+        last_login TIMESTAMP
+);
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;pseudo-types&quot;&gt;Pseudo Types&lt;/h2&gt;
+&lt;ul&gt;
+  &lt;li&gt;SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;constraints&quot;&gt;Constraints&lt;/h2&gt;
+&lt;p&gt;Each row may be constrained:&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;ul&gt;
+    &lt;li&gt;NOT NULL – ensures that values in a column cannot be NULL.&lt;/li&gt;
+    &lt;li&gt;UNIQUE – ensures the values in a column unique across the rows within the same table.&lt;/li&gt;
+    &lt;li&gt;PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table.&lt;/li&gt;
+    &lt;li&gt;CHECK – a CHECK constraint ensures the data must satisfy a boolean expression.&lt;/li&gt;
+    &lt;li&gt;FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys.&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;create-table-from-another-table-select-into--create-table--as--preferred&quot;&gt;Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)&lt;/h2&gt;</content><author><name></name></author><category term="tutorial" /><category term="postgresql" /><summary type="html">PostgreSQL tests The following are my learning notes while doing the postgresql tutorial. References Tutorial Reference documentation Test environment Download postgresql for windows Installation Tutorial Note: remember the user/password… VS Code Extension: ckolkman.vscode-postgres Note: in my opinion, better than ms-ossdata.vscode-postgresql although both are good options Test: Open the extension toolbar and select “Add Connection” with the server data Create a new file and set language type to “postgres” Enter a query Enter command: PostgreSQL: Run Query (F5) Tutorial Notes Select order of evaluation: FROM -&amp;gt; WHERE -&amp;gt; GROUP BY -&amp;gt; HAVING -&amp;gt; SELECT -&amp;gt; DISTINCT -&amp;gt; ORDER BY -&amp;gt; LIMIT Concatenation: SELECT first_name || ' ' || last_name Aliases: AS If spaces -&amp;gt; use double quotes operators LENGTH(first_name) COUNT SUM AVG ROUND(number, precision) ORDER BY NULL values are put “last”: so if request is ordered by DESC, NULL values will appear first. Unless: ORDER BY num NULLS LAST; DISTINCT remove duplicates on the given columns. keep first row. Can not select multiple columns while filtering duplicates on only one The following will remove duplicates on the set (first_name, last_name): SELECT DISTINCT first_name, last_name FROM double_customer; DISTINCT ON A postgresql extension to SQL. Allow to specify the column to filter while also selecing others. The following will remove duplicates on first_name but select both columns: SELECT DISTINCT ON (first_name) first_name, last_name FROM double_customer; LIKE ‘’ Return true if field matches the pattern. 2 wildcards: ‘%’ matches any character, “_” matches exactly one Case sensitive SQL extension: ILIKE: case insensitive variant of LIKE; Aliases: ~~ LIKE ~~* ILIKE !~~ NOT LIKE !~~* NOT ILIKE BETWEEN Possible usages: LENGTH(first_name) IN (3, 4, 5) LENGTH(first_name) BETWEEN 3 AND 5 in which case the matching range includes 3 and 5 LIMIT Like “head”, limit the number of returned values is non-sql standard but widespread. SQL standard is: OFFSET start { ROW | ROWS } FETCH { FIRST | NEXT } [ row_count ] { ROW | ROWS } ONLY WHERE Filter values from expression. It is possible to use another select statement, as in: SELECT customer_id FROM customer WHERE customer_id NOT IN (SELECT customer_id from rental); When filtering on dates, even if column field is timestamp, one can directly use: WHERE payment_date BETWEEN '2007-02-07' AND '2007-02-15'; JOINS Element of the FROM clause: [ INNER ] JOIN {LEFT RIGHT FULL} [OUTER] JOIN must be followed by ON or USING or NATURAL INNER JOIN == intersection of sets Example: find all transactions for a given client OUTER JOIN: LEFT = the source indicated just after the FROM clause includes the intersecting set plus the whole LEFT RIGHT FULL set, using ‘NULL’ values in columns for rows that are not intersecting returned in the order from the LEFT table, except for RIGHT JOIN Examples: LEFT: find all films that are not in inventory (film.inventory_id is NULL, inventory_id is added to film in JOIN) SELECT * FROM basket_a , basket_b;returns the combinations from both tables. It is a cross-join clause shortcut, full syntax is: SELECT * FROM basket_a CROSS JOIN basket_b NATURAL: creates an implicit join based on the same column names in the joined tables. Should be avoided because it uses all columns implicitly. USING: USING ( a, b, … ) is shorthand for ON left_table.a = right_table.a AND left_table.b = right_table.b …. Also, USING implies that only one of each pair of equivalent columns will be included in the join output, not both. GROUP BY / HAVING GROUP BY will condense into a single row all selected rows that share the same values for the grouped expressions. When using GROUP BY, all elements listed in SELECT must also be GROUP’d BY Other elements can be selected through aggregate functions: SUM, COUNT, … HAVING introduces a filter to the group The WHERE clause is applied to rows while the HAVING clause is applied to groups of rows. ROLLUP / CUBE: generated grouping sets automatically (for instance using ROLLUP to generate the subtotals and the grand total for reports) SELECT store_id, COUNT (customer_id) FROM customer GROUP BY store_id HAVING COUNT (customer_id) &amp;gt; 300; Note we can’t use WHERE to perform an equivalent filter here. UNION / INTERSECT / EXCEPT [ALL | DISTINCT] Combine the output of more than one SELECT statement UNION: returns all rows that are in one or both of the result sets INTERSECT: returns all rows that are strictly in both result sets EXCEPT: returns the rows that are in the first result set but not in the second In all three cases, duplicate rows are eliminated unless ALL is specified. The noise word DISTINCT can be added to explicitly specify eliminating duplicate rows. SUBQUERY Syntax: use parenthesis around the subquery The subquery may return one row (value) or a list of rows The outer query can use: IN operator (for instance in the where clause) EXISTS: True if the number of row returned by the subquery is not 0 (in which case, the subquery may return multiple columns) If the subquery returns NULL, EXISTS returns true ANY / ALL: operators taking a subquery and a comparison operator (only if there is just one column) ANY returns true if operation is true for at least one element of the suquery ALL returns true if operation is true for all elements of the suquery PostgreSQL executes the query that contains a subquery in the following sequence: First, executes the subquery. Second, gets the result and passes it to the outer query. Third, executes the outer query. CTE / RECURSIVE Usefull to parse hierarchical data: subordinates of Manager X, BOM… INSERT INSERT INTO links (url, name) VALUES ('http://www.postgresql.org','PostgreSQL'), ('https://www.yahoo.com','Yahoo'), RETURNING id; RETURNING returns the information on the created row; useful when some columns are generated by the database itself, like the id if no value is specified for a column, use default Merge Resolution: Upsert (update - insert) Inserting a new row with values already in the table is only a problem if the table defines constraints on some columns. For instance: CREATE TABLE customers ( customer_id serial PRIMARY KEY, name VARCHAR UNIQUE, email VARCHAR NOT NULL, active bool NOT NULL DEFAULT TRUE ); The UNIQUE constraint on the “name” column will ensure that when trying to insert a row with an already existing name, an error will be raised. To specify the behavior to handle this situation without error, use ON CONFLICT clause (postgresql extension). ON CONFLICT [ conflict_target ] conflict_action where conflict_target can be one of: ( { index_column_name | ( index_expression ) } [ COLLATE collation ] [ opclass ] [, ...] ) [ WHERE index_predicate ] ON CONSTRAINT constraint_name and conflict_action is one of: DO NOTHING DO UPDATE SET { column_name = { expression | DEFAULT } | ( column_name [, ...] ) = [ ROW ] ( { expression | DEFAULT } [, ...] ) | ( column_name [, ...] ) = ( sub-SELECT ) } [, ...] [ WHERE condition ] Note: when using DO UPDATE SET, a special table alias excluded is created with the row proposed for insertion. UPDATE The PostgreSQL UPDATE statement allows you to modify data in a table. The following illustrates the syntax of the UPDATE statement: UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition; In this syntax: First, specify the name of the table that you want to update data after the UPDATE keyword. Second, specify columns and their new values after SET keyword. The columns that do not appear in the SET clause retain their original values. Third, determine which rows to update in the condition of the WHERE clause. The WHERE clause is optional. If you omit the WHERE clause, the UPDATE statement will update all rows in the table. UPDATE join using FROM clause Update a column based on the value of another column from another set. Basically comes down to joining tables. Warning: When using FROM you should ensure that the join produces at most one output row for each row to be modified. Because of this indeterminacy, referencing other tables only within sub-selects is safer, though often harder to read and slower than using a join. Example: UPDATE product SET net_price = price - price * discount FROM product_segment WHERE product.segment_id = product_segment.id RETURNING *; DELETE FROM basic syntax: DELETE FROM product WHERE name LIKE 's%' RETURNING *; when needing several tables: USING Not SQL standard. Not the same as USING in JOIN (expects a table_expression, as used in the FROM clause) DELETE FROM t1 USING t2 WHERE t1.id = t2.id subquery SQL standard DELETE FROM contacts WHERE phone IN (SELECT phone FROM blacklist); Transactions A database transaction is a single unit of work that consists of one or more operations. A PostgreSQL transaction is atomic, consistent, isolated, and durable. These properties are often &amp;gt; referred to as ACID: Atomicity guarantees that the transaction completes in an all-or-nothing manner. Consistency ensures the change to data written to the database must be valid and follow predefined &amp;gt; rules. Isolation determines how transaction integrity is visible to other transactions. Durability makes sure that transactions that have been committed will be stored in the database &amp;gt; permanently. Example: -- start a transaction BEGIN; -- deduct 1000 from account 1 UPDATE accounts SET balance = balance - 1000 WHERE id = 1; -- add 1000 to account 2 UPDATE accounts SET balance = balance + 1000 WHERE id = 2; -- select the data from accounts SELECT id, name, balance FROM accounts; -- commit the transaction COMMIT; To Cancel an uncommitted transaction: use ROLLBACK Import/Export to CSV Use the “COPY” command. CREATE TABLE Basic syntax: CREATE TABLE accounts ( user_id serial PRIMARY KEY, username VARCHAR ( 50 ) UNIQUE NOT NULL, password VARCHAR ( 50 ) NOT NULL, email VARCHAR ( 255 ) UNIQUE NOT NULL, created_on TIMESTAMP NOT NULL, last_login TIMESTAMP ); Pseudo Types SERIAL generates a sequence of integers (1 to 2,147,483,647). Also: smallserial, bigserial Constraints Each row may be constrained: NOT NULL – ensures that values in a column cannot be NULL. UNIQUE – ensures the values in a column unique across the rows within the same table. PRIMARY KEY – a primary key column uniquely identify rows in a table. A table can have one and only one primary key. The primary key constraint allows you to define the primary key of a table. CHECK – a CHECK constraint ensures the data must satisfy a boolean expression. FOREIGN KEY – ensures values in a column or a group of columns from a table exists in a column or group of columns in another table. Unlike the primary key, a table can have many foreign keys. Create table from another table: SELECT INTO / CREATE TABLE .. AS … (preferred)</summary></entry><entry><title type="html">Welcome to Jekyll!</title><link href="http://localhost:4000/blog/jekyll/update/2022/12/01/welcome-to-jekyll.html" rel="alternate" type="text/html" title="Welcome to Jekyll!" /><published>2022-12-01T09:40:01+01:00</published><updated>2022-12-01T09:40:01+01:00</updated><id>http://localhost:4000/blog/jekyll/update/2022/12/01/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/blog/jekyll/update/2022/12/01/welcome-to-jekyll.html">&lt;p&gt;You’ll find this post in your &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;jekyll serve&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
+
+&lt;p&gt;To add new posts, simply add a file in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
+
+&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Tom'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints 'Hi, Tom' to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Check out the &lt;a href=&quot;https://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;</content><author><name></name></author><category term="jekyll" /><category term="update" /><summary type="html">You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.</summary></entry></feed>
