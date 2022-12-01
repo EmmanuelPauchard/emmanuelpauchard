@@ -1,3 +1,9 @@
+---
+layout: post
+title:  "postgresql: tutorial notes"
+date:   2022-12-01 09:40:01 +0100
+categories: tutorial postgresql
+---
 # PostgreSQL tests
 
 The following are my learning notes while doing the postgresql tutorial.
