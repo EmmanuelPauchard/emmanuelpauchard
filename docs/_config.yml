@@ -18,7 +18,7 @@ title: Emmanuel Pauchard
 email: emmanuel.pauchard@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   My notes and thoughts, I guess.
-baseurl: "/blog" # the subpath of your site, e.g. /blog
+baseurl: "/emmanuelpauchard" # the subpath of your site, e.g. /blog
 url: "https://emmanuelpauchard.github.io/emmanuelpauchard" # the base hostname & protocol for your site, e.g. http://example.com
 github_username:  EmmanuelPauchard
 
