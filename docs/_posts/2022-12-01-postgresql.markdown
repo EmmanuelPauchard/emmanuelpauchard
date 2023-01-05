@@ -4,7 +4,7 @@ title:  "postgresql: tutorial notes"
 date:   2022-12-01 09:40:01 +0100
 categories: tutorial postgresql
 description: Some personal notes on gettings started with postgresql and SQL syntax.
-comments: true
+comment_issue_id: 3
 ---
 # PostgreSQL tests
 

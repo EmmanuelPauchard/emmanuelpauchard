@@ -19,8 +19,10 @@ layout: default
     {{ content }}
   </div>
 
-  {%- if page.comments -%}
-      {%- include utterances_comments.html -%}
+  {% if page.comment_issue_id %}
+  <script src='{{ "/assets/js/jquery-3.6.3.min.js" | relative_url }}'></script>
+  {% capture github_repo %}{{site.github_username}}{{site.baseurl}}{% endcapture %}
+  {% include comments.html element='.post-content' github_account=github_repo require_cookie_consent='false' %}
   {%- endif -%}
   
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
