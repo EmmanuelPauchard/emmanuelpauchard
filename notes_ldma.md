@@ -7,6 +7,8 @@
 A DMA (Direct Memory Access) provides a way to move data to/from memory or peripherals without using the CPU.
 Silabs' LDMA (Linked DMA) gives us a possibility to set up a chain of different DMA configurations that, once started, will be entirely handled by the DMA controller.
 
+Because Silabs provide a comprehensive set of instructions to program the DMA controller, the challenge becomes to build a sequence that will require the CPU as little as possible, and avoid interruptions as much as possibles.
+
 # Data structures
 LDMA_Descriptor_t:
 - structReq: if set, start transfer as soon as descriptor is loaded, else wait for signal
